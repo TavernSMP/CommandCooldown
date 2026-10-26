@@ -85,6 +85,54 @@ public class DatabasePlayerCooldownsRepository extends DatabaseConnection implem
     }
 
     @Override
+    public void restoreCooldown(PlayerCooldown incoming) {
+        List<String> previous = new ArrayList<>();
+        long deadline = incoming.getEnd();
+        try (PreparedStatement select = prepareStatement("SELECT " + COMMAND_COLUMN + " FROM "
+                + PLAYER_COOLDOWNS_TABLE + " WHERE UUID=?")) {
+            select.setString(1, incoming.getPlayer().toString());
+            try (ResultSet results = select.executeQuery()) {
+                while (results.next()) {
+                    String value = results.getString(COMMAND_COLUMN);
+                    PlayerCooldown existing = PlayerCooldown.parsePlayerCooldown(value);
+                    if (existing == null) {
+                        throw new IllegalStateException("Invalid destination cooldown during legacy migration");
+                    }
+                    if (existing.equals(incoming)) {
+                        deadline = Math.max(deadline, existing.getEnd());
+                        previous.add(value);
+                    }
+                }
+            }
+        } catch (Exception failure) {
+            throw new IllegalStateException("Could not read destination cooldowns during legacy migration", failure);
+        }
+        String merged = new PlayerCooldown(incoming.getPlayer(), incoming.getCooldown(), deadline).toString();
+        if (previous.isEmpty()) {
+            try (PreparedStatement insert = prepareStatement("INSERT INTO " + PLAYER_COOLDOWNS_TABLE
+                    + " (UUID, " + COMMAND_COLUMN + ") VALUES (?,?)")) {
+                insert.setString(1, incoming.getPlayer().toString());
+                insert.setString(2, merged);
+                insert.executeUpdate();
+            } catch (Exception failure) {
+                throw new IllegalStateException("Could not persist migrated cooldown", failure);
+            }
+        } else {
+            for (String value : previous) {
+                try (PreparedStatement update = prepareStatement("UPDATE " + PLAYER_COOLDOWNS_TABLE
+                        + " SET " + COMMAND_COLUMN + "=? WHERE UUID=? AND " + COMMAND_COLUMN + "=?")) {
+                    update.setString(1, merged);
+                    update.setString(2, incoming.getPlayer().toString());
+                    update.setString(3, value);
+                    update.executeUpdate();
+                } catch (Exception failure) {
+                    throw new IllegalStateException("Could not preserve migrated cooldown deadline", failure);
+                }
+            }
+        }
+    }
+
+    @Override
     public void giveCooldown(Player p, Cooldown cooldown) {
         assert !playerHasCooldown(p, cooldown);
         if (cooldown == null) return;

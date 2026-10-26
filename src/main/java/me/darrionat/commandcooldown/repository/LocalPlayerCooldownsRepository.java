@@ -7,12 +7,16 @@ import me.darrionat.commandcooldown.interfaces.IPlayerCooldownsRepository;
 import me.darrionat.pluginlib.files.Config;
 import me.darrionat.pluginlib.files.ConfigBuilder;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 
 public class LocalPlayerCooldownsRepository implements IPlayerCooldownsRepository {
 
@@ -28,6 +32,53 @@ public class LocalPlayerCooldownsRepository implements IPlayerCooldownsRepositor
 
     public void init() {
         playerConfigMap.clear();
+    }
+
+    @Override
+    public void restoreCooldown(PlayerCooldown incoming) {
+        Config config = getPlayerDataConfig(incoming.getPlayer());
+        YamlConfiguration file = new YamlConfiguration();
+        try {
+            file.load(config.getFile());
+        } catch (Exception failure) {
+            throw new IllegalStateException("Could not read destination player cooldowns", failure);
+        }
+        if (file.contains("cooldowns") && !file.isList("cooldowns")) {
+            throw new IllegalStateException("Destination cooldowns must be a list");
+        }
+        List<String> merged = new ArrayList<>();
+        long deadline = incoming.getEnd();
+        for (String value : file.getStringList("cooldowns")) {
+            PlayerCooldown existing = PlayerCooldown.parsePlayerCooldown(value);
+            if (existing == null) {
+                throw new IllegalStateException("Invalid destination cooldown during legacy migration");
+            }
+            if (existing.equals(incoming)) {
+                deadline = Math.max(deadline, existing.getEnd());
+            } else {
+                merged.add(value);
+            }
+        }
+        merged.add(new PlayerCooldown(incoming.getPlayer(), incoming.getCooldown(), deadline).toString());
+        file.set("cooldowns", merged);
+        Path pending = null;
+        try {
+            pending = Files.createTempFile(config.getFile().toPath().getParent(), "cooldown-migration-", ".yml");
+            file.save(pending.toFile());
+            Files.move(pending, config.getFile().toPath(), StandardCopyOption.ATOMIC_MOVE,
+                    StandardCopyOption.REPLACE_EXISTING);
+            playerConfigMap.remove(incoming.getPlayer());
+        } catch (Exception failure) {
+            throw new IllegalStateException("Could not atomically persist migrated player cooldowns", failure);
+        } finally {
+            if (pending != null) {
+                try {
+                    Files.deleteIfExists(pending);
+                } catch (java.io.IOException failure) {
+                    plugin.getLogger().warning("Could not remove cooldown migration temporary file");
+                }
+            }
+        }
     }
 
     private void setupPlayerDataFile(UUID uuid) {

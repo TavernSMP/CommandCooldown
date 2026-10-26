@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.UUID;
 
 public interface IPlayerCooldownsRepository extends Repository {
+    void restoreCooldown(PlayerCooldown cooldown);
+
     /**
      * Gives a player a defined cooldown.
      *

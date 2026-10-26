@@ -12,6 +12,7 @@ import me.darrionat.commandcooldown.interfaces.*;
 import me.darrionat.commandcooldown.listeners.PlayerCommandPreprocess;
 import me.darrionat.commandcooldown.listeners.PlayerJoin;
 import me.darrionat.commandcooldown.prompts.ChatPromptListener;
+import me.darrionat.commandcooldown.repository.DatabasePlayerCooldownsRepository;
 import me.darrionat.commandcooldown.statics.Bootstrapper;
 import me.darrionat.commandcooldown.utils.Errors;
 import me.darrionat.pluginlib.Plugin;
@@ -98,6 +99,9 @@ public class CommandCooldownPlugin extends Plugin {
 
     @Override
     public void onDisable() {
+        if (playerCooldownsRepo instanceof DatabasePlayerCooldownsRepository database) {
+            database.disconnect();
+        }
     }
 
     public boolean updateAvailable() {

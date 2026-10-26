@@ -41,6 +41,7 @@ public class Bootstrapper {
         }
         cooldownsRepo = new CooldownsRepository(plugin);
         messageRepo = new MessageRepository(plugin);
+        LegacyCooldownMigration.migrate(plugin.getDataFolder(), playerCooldownsRepo);
 
         repositories.add(configRepo);
         repositories.add(cooldownsRepo);
