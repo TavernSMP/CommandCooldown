@@ -3,3 +3,10 @@
 /target/
 /dependency-reduced-pom.xml
 *.iml
+
+**/target/
+**/dependency-reduced-pom.xml
+**/.flattened-pom.xml
+**/pom.xml.versionsBackup
+**/.idea/
+*.iml

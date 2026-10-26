@@ -1,0 +1,25 @@
+# Compiled class file
+*.class
+
+# Eclipse IDE Files
+*.classpath
+*.project
+
+# Out folder
+**/bin
+**/target
+
+# Eclipse Settings
+**/.settings
+*.iml
+
+# Maven
+dependency-reduced-pom.xml
+
+# JavaDoc
+**/doc
+
+# IntelliJ
+**/.idea
+
+.flattened-pom.xml

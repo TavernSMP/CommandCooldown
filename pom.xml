@@ -6,8 +6,12 @@
 
     <groupId>me.darrionat</groupId>
     <artifactId>CommandCooldown</artifactId>
-    <version>3.0.8</version>
+    <version>3.0.8-26.3-tavern.1</version>
     <repositories>
+        <repository>
+            <id>papermc</id>
+            <url>https://repo.papermc.io/repository/maven-public/</url>
+        </repository>
         <repository>
             <id>spigot-repo</id>
             <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
@@ -24,22 +28,28 @@
     <dependencies>
         <!-- Spigot -->
         <dependency>
-            <groupId>org.spigotmc</groupId>
-            <artifactId>spigot-api</artifactId>
-            <version>1.16.5-R0.1-SNAPSHOT</version>
+            <groupId>io.papermc.paper</groupId>
+            <artifactId>paper-api</artifactId>
+            <version>26.3.build.223-stable</version>
             <scope>provided</scope>
         </dependency>
         <!-- PluginLib -->
         <dependency>
             <groupId>me.darrionat</groupId>
             <artifactId>core</artifactId>
-            <version>1.9.4</version>
+            <version>1.9.4-26.3-tavern.1</version>
         </dependency>
         <dependency>
-            <groupId>net.wesjd</groupId>
-            <artifactId>anvilgui</artifactId>
-            <version>1.5.1-SNAPSHOT</version>
-            <scope>compile</scope>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.13.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>5.23.0</version>
+            <scope>test</scope>
         </dependency>
 
     </dependencies> <!-- Added for snapshots-->
@@ -59,6 +69,19 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+                <configuration>
+                    <argLine>-javaagent:${settings.localRepository}/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar</argLine>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
                 <version>3.3.1</version> <!-- Use an appropriate version -->
                 <configuration>
@@ -70,7 +93,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>3.6.0</version>
+                <version>3.6.2</version>
                 <configuration>
                     <relocations>
                         <relocation>
@@ -92,9 +115,8 @@
     </build>
     <properties>
         <java.version>1.16</java.version>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <project.minecraft.api.version>1.16</project.minecraft.api.version>
+        <maven.compiler.release>25</maven.compiler.release>
+        <project.minecraft.api.version>26.3</project.minecraft.api.version>
         <project.description>An easy way to add cooldowns to commands</project.description>
         <project.author>Darrionat</project.author>
     </properties>
